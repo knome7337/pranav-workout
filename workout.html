@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Workout — Pranav</title>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --card: #1a1a1a;
+    --accent: #d4b3ff;
+    --accent-dim: #2a1f40;
+    --text: #e8e8e8;
+    --muted: #888;
+    --border: #2a2a2a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* header */
+  .header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg);
+    padding: 16px 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .header h1 {
+    font-size: 1.3rem; font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .tabs {
+    display: flex; gap: 0;
+    margin-bottom: 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    text-align: center;
+    font-size: 0.9rem; font-weight: 600;
+    color: var(--muted);
+    background: none; border: none; border-bottom: 2px solid transparent;
+    cursor: pointer; transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-day {
+    display: block; font-size: 0.7rem; font-weight: 400;
+    color: var(--muted); margin-top: 2px;
+  }
+  .tab.active .tab-day { color: var(--accent); opacity: 0.7; }
+
+  /* session info */
+  .session-info {
+    padding: 12px 16px;
+    font-size: 0.85rem; color: var(--muted);
+    background: #111;
+    border-bottom: 1px solid var(--border);
+  }
+  .session-info span { color: var(--accent); }
+
+  /* exercise cards */
+  .cards { padding: 16px; display: flex; flex-direction: column; gap: 20px; }
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .card-img {
+    width: 100%; aspect-ratio: 1/1;
+    object-fit: cover;
+    display: block;
+    background: #222;
+  }
+  .card-body { padding: 16px; }
+  .card-title {
+    font-size: 1.1rem; font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .card-reps {
+    font-size: 1.5rem; font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .card-coach {
+    font-size: 0.9rem; color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .card-timer {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .timer-btn {
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem; font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s;
+  }
+  .timer-btn:active { transform: scale(0.95); }
+  .timer-display {
+    font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums;
+    min-width: 40px;
+    color: var(--accent);
+  }
+  .timer-display.running { color: #ff6b6b; }
+
+  /* hidden session */
+  .session { display: none; }
+  .session.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏋️ Workout</h1>
+  <div class="tabs">
+    <button class="tab active" data-session="tue">
+      Tuesday
+      <span class="tab-day">Upper + Core</span>
+    </button>
+    <button class="tab" data-session="thu">
+      Thursday
+      <span class="tab-day">Full Body</span>
+    </button>
+  </div>
+</div>
+
+<div class="session-info" id="sessionInfo">
+  ⏱ ~40 min &middot; <span id="sessionDesc">Upper body + core priority. Keep legs fresh for Wednesday speed.</span>
+</div>
+
+<div id="sessionTue" class="session active"></div>
+<div id="sessionThu" class="session"></div>
+
+<script>
+const SESSIONS = {
+  tue: {
+    desc: "Upper body + core priority. Keep legs fresh for Wednesday speed.",
+    exercises: [
+      { name: "Barbell Bench Press", reps: "3 × 10", coach: "Control the descent (2 sec down). Last rep should be a grind.", img: "img/bench-press.png" },
+      { name: "Machine / Cable Seated Row", reps: "3 × 10–12", coach: "Pull elbows straight back. Pause 1 sec at full contraction.", img: "img/seated-row.png" },
+      { name: "Dumbbell Shoulder Press", reps: "3 × 10", coach: "Seated, full ROM. Don't lock out elbows at the top.", img: "img/shoulder-press.png" },
+      { name: "Plank", reps: "3 × 30–45s", coach: "Squeeze glutes + quads. No sagging hips. Add 5s every week.", img: "img/plank.png" },
+      { name: "Dead Bug", reps: "8 reps / side", coach: "Lower back flat to floor. Go slow — 3 sec extend, 2 sec return.", img: "img/dead-bug.png" },
+    ]
+  },
+  thu: {
+    desc: "Full body. Legs welcome — Friday is tempo, not speed. Saturday rest follows.",
+    exercises: [
+      { name: "Barbell Back Squat", reps: "3 × 8–10", coach: "Bar on traps. Knees track toes. Go to parallel. Last 2 reps should feel hard.", img: "img/squat.png" },
+      { name: "Romanian Deadlift (RDL)", reps: "3 × 8", coach: "Hinge at hips, slight knee bend, bar stays close to legs. Feel the hamstring stretch.", img: "img/deadlift.png" },
+      { name: "Barbell Bench Press", reps: "3 × 10", coach: "Control the descent (2 sec down). Favourite exercise — own it.", img: "img/bench-press.png" },
+      { name: "Glute Bridge", reps: "3 × 12–15", coach: "Drive hips high, hold 2 sec at top. Squeeze glutes hard. Lower slowly (3 sec).", img: "img/glute-bridge.png" },
+      { name: "Plank", reps: "3 × 30–45s", coach: "Elbows under shoulders. Squeeze everything. No sagging hips.", img: "img/plank.png" },
+      { name: "Dead Bug", reps: "8 reps / side", coach: "Lower back flat to floor. Opposite arm + leg. Slow and controlled.", img: "img/dead-bug.png" },
+      { name: "Supine Thoracic Rotation", reps: "8 reps / side", coach: "Knees together, rotate top knee to floor. Opens chest — helps breathing on runs.", img: "img/thoracic-rotation.png" },
+    ]
+  }
+};
+
+function renderSession(id, data) {
+  const container = document.getElementById('session' + id.charAt(0).toUpperCase() + id.slice(1));
+  container.innerHTML = data.exercises.map((ex, i) => `
+    <div class="card">
+      <img class="card-img" src="${ex.img}" alt="${ex.name}" loading="lazy">
+      <div class="card-body">
+        <div class="card-title">${ex.name}</div>
+        <div class="card-reps">${ex.reps}</div>
+        <div class="card-coach">${ex.coach}</div>
+        <div class="card-timer" data-exercise="${i}">
+          <button class="timer-btn" data-action="start">⏱ Rest</button>
+          <span class="timer-display">--</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Render both sessions
+renderSession('tue', SESSIONS.tue);
+renderSession('thu', SESSIONS.thu);
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const session = tab.dataset.session;
+    document.querySelectorAll('.session').forEach(s => s.classList.remove('active'));
+    document.getElementById('session' + session.charAt(0).toUpperCase() + session.slice(1)).classList.add('active');
+    document.getElementById('sessionDesc').textContent = SESSIONS[session].desc;
+  });
+});
+
+// Rest timer
+const timers = {};
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-action="start"]');
+  if (!btn) return;
+  const card = btn.closest('.card');
+  const display = card.querySelector('.timer-display');
+  const idx = card.querySelector('.card-timer').dataset.exercise;
+
+  // Clear existing timer for this card
+  if (timers[idx]) { clearInterval(timers[idx].interval); delete timers[idx]; }
+
+  // Start 90s rest
+  let secs = 90;
+  display.textContent = '1:30';
+  display.className = 'timer-display running';
+  btn.textContent = '⏹ Stop';
+
+  timers[idx] = {
+    interval: setInterval(() => {
+      secs--;
+      if (secs <= 0) {
+        clearInterval(timers[idx].interval);
+        delete timers[idx];
+        display.textContent = 'GO!';
+        display.className = 'timer-display';
+        btn.textContent = '⏱ Rest';
+        return;
+      }
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      display.textContent = m + ':' + String(s).padStart(2, '0');
+    }, 1000)
+  };
+});
+
+// Stop timer by clicking running display
+document.addEventListener('click', e => {
+  const display = e.target.closest('.timer-display');
+  if (!display || !display.classList.contains('running')) return;
+  const card = display.closest('.card');
+  const btn = card.querySelector('[data-action="start"]');
+  const idx = card.querySelector('.card-timer').dataset.exercise;
+  if (timers[idx]) {
+    clearInterval(timers[idx].interval);
+    delete timers[idx];
+  }
+  display.textContent = '--';
+  display.className = 'timer-display';
+  btn.textContent = '⏱ Rest';
+});
+
+// Service worker registration for offline
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
