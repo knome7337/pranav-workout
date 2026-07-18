@@ -1,7 +1,7 @@
 const CACHE = 'workout-v1';
 const URLS = [
   '.',
-  'workout.html',
+  'index.html',
   'img/bench-press.png',
   'img/seated-row.png',
   'img/shoulder-press.png',
